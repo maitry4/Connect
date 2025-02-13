@@ -10,10 +10,12 @@ class CFirebaseAuthRepo implements CAuthRepo {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
   @override
-  Future<CAppUser?> loginWithEmailPassword(String email, String password) async {
+  Future<CAppUser?> loginWithEmailPassword(
+      String email, String password) async {
     try {
       // Attempt to sign in with the provided email and password
-      UserCredential userCredential = await firebaseAuth.signInWithEmailAndPassword(
+      UserCredential userCredential =
+          await firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -25,7 +27,6 @@ class CFirebaseAuthRepo implements CAuthRepo {
         name: '', // Name is left empty as Firebase does not provide it directly
       );
       return user;
-
     } catch (e) {
       // Catch any errors and throw a custom exception
       throw Exception('Login Failed: $e');
@@ -33,10 +34,12 @@ class CFirebaseAuthRepo implements CAuthRepo {
   }
 
   @override
-  Future<CAppUser?> registerWithEmailPassword(String name, String email, String password) async {
+  Future<CAppUser?> registerWithEmailPassword(
+      String name, String email, String password) async {
     try {
       // Attempt to create a new user with email and password
-      UserCredential userCredential = await firebaseAuth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -50,10 +53,10 @@ class CFirebaseAuthRepo implements CAuthRepo {
 
       // save user's data in firebase database.
       await firebaseFirestore
-      .collection('users')
-      .doc(user.uid)
-      .set(user.toJson());
-      
+          .collection('users')
+          .doc(user.uid)
+          .set(user.toJson());
+
       return user;
     } catch (e) {
       // Catch any errors and throw a custom exception
@@ -76,12 +79,17 @@ class CFirebaseAuthRepo implements CAuthRepo {
     if (firebaseUser == null) {
       return null;
     } else {
-      // Return a CAppUser instance with user details
-      return CAppUser(
-        uid: firebaseUser.uid, // Unique user ID
-        email: firebaseUser.email!, // User's email (non-nullable assumption)
-        name: '', // Name is not stored in Firebase Auth, so it's left empty
-      );
+      // Fetch user details from Firestore
+      DocumentSnapshot userDoc = await firebaseFirestore
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        return null; // If user data doesn't exist in Firestore database
+      }
+      // Convert Firestore data to CAppUser
+      return CAppUser.fromJson(userDoc.data() as Map<String, dynamic>);
     }
   }
 }

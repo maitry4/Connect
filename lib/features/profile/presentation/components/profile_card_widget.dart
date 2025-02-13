@@ -2,7 +2,15 @@ import 'package:connect/features/profile/presentation/components/stats_widget.da
 import 'package:connect/utils/responsive_helper.dart';
 import 'package:flutter/material.dart';
 
-class CProfileCardWidget extends StatelessWidget {
+class CProfileCardWidget extends StatefulWidget {
+  final String nm;
+  const CProfileCardWidget({super.key, required this.nm});
+
+  @override
+  State<CProfileCardWidget> createState() => _CProfileCardWidgetState();
+}
+
+class _CProfileCardWidgetState extends State<CProfileCardWidget> {
   @override
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
@@ -23,7 +31,7 @@ class CProfileCardWidget extends StatelessWidget {
                 // backgroundImage: AssetImage('assets/profile.jpg'),
               ),
               const SizedBox(height: 10),
-              Text('Samantha Jones', style: TextStyle(color:Theme.of(context).colorScheme.tertiary, fontSize: 28, fontWeight: FontWeight.bold)),
+              Text(widget.nm, style: TextStyle(color:Theme.of(context).colorScheme.tertiary, fontSize: 28, fontWeight: FontWeight.bold)),
               Text('New York, United States', style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
               const SizedBox(height: 10),
               const Text('Web Producer - Web Specialist\nColumbia University - New York', textAlign: TextAlign.center, style: TextStyle(fontSize: 14)),

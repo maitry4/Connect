@@ -1,6 +1,9 @@
 import 'package:connect/features/profile/presentation/components/profile_card_widget.dart';
 import 'package:connect/utils/responsive_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:connect/features/auth/presentation/cubits/auth_cubit.dart';
+import 'package:connect/features/auth/domain/entities/app_user.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CProfilePage extends StatefulWidget {
   const CProfilePage({super.key});
@@ -10,14 +13,19 @@ class CProfilePage extends StatefulWidget {
 }
 
 class _CProfilePageState extends State<CProfilePage> {
+  // cubits
+  late final authCubit = context.read<CAuthCubit>();
+
+  // get the current user
+  late CAppUser? currentUser = authCubit.currentUser;
+ 
   @override
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
     final isDesktop = res.width(100) >= 800; // Desktop breakpoint
     return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.primary,),
-      backgroundColor: isDesktop
-                ? Theme.of(context).colorScheme.primary: const Color.fromARGB(255, 249, 232, 238),
+      appBar: AppBar(backgroundColor:  Theme.of(context).colorScheme.surface,),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: SafeArea(
           child:  isDesktop
@@ -29,7 +37,7 @@ class _CProfilePageState extends State<CProfilePage> {
   }
 
   Widget _buildDesktopLayout(BuildContext context, ResponsiveHelper res) {
-    return Center(child: CProfileCardWidget());
+    return Center(child: CProfileCardWidget(nm: currentUser!.name));
   }
 
   Widget _buildMobileLayout(BuildContext context, ResponsiveHelper res) {
@@ -56,8 +64,8 @@ class _CProfilePageState extends State<CProfilePage> {
           ],
         ),
         const SizedBox(height: 10),
-        const Text(
-          "Samantha Jones",
+        Text(
+          currentUser!.name,
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const Text(
