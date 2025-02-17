@@ -2,7 +2,8 @@ import 'package:connect/utils/responsive_helper.dart';
 import 'package:flutter/material.dart';
 
 class CLoadingScreen extends StatelessWidget {
-  const CLoadingScreen({super.key});
+  final String loadingText;
+  const CLoadingScreen({super.key, required this. loadingText});
   @override
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
@@ -26,7 +27,7 @@ class CLoadingScreen extends StatelessWidget {
       children: [
         Image.asset("assets/images/loading.jpg", fit: BoxFit.contain, width:res.width(30)),
         Text(
-          'Your Moments, Your Story—Securely Connected.',
+          loadingText,
           style: TextStyle(
             color: Theme.of(context).colorScheme.tertiary,
             fontSize: res.fontSize(2),
@@ -41,7 +42,7 @@ class CLoadingScreen extends StatelessWidget {
       children: [
         Image.asset("assets/images/loading.jpg", fit: BoxFit.contain, width:res.width(40)),
         Text(
-          'Your Moments, Your Story—Securely Connected.',
+          loadingText,
           style: TextStyle(
             color: Theme.of(context).colorScheme.tertiary,
             fontSize: res.fontSize(3.5),

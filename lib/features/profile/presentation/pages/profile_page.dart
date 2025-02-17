@@ -1,12 +1,17 @@
+import 'package:connect/features/profile/domain/entities/profile_user.dart';
+import 'package:connect/features/profile/presentation/components/action_button.dart';
 import 'package:connect/features/profile/presentation/components/profile_card_widget.dart';
+import 'package:connect/features/profile/presentation/cubits/profile_cubit.dart';
+import 'package:connect/features/profile/presentation/cubits/profile_state.dart';
+import 'package:connect/features/profile/presentation/pages/profile_edit_page.dart';
+import 'package:connect/utils/loading_screen.dart';
 import 'package:connect/utils/responsive_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:connect/features/auth/presentation/cubits/auth_cubit.dart';
-import 'package:connect/features/auth/domain/entities/app_user.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CProfilePage extends StatefulWidget {
-  const CProfilePage({super.key});
+  final String uid;
+  const CProfilePage({super.key, required this.uid});
 
   @override
   State<CProfilePage> createState() => _CProfilePageState();
@@ -14,33 +19,55 @@ class CProfilePage extends StatefulWidget {
 
 class _CProfilePageState extends State<CProfilePage> {
   // cubits
-  late final authCubit = context.read<CAuthCubit>();
+  late final profileCubit = context.read<CProfileCubit>();
 
-  // get the current user
-  late CAppUser? currentUser = authCubit.currentUser;
- 
+  // onStartup
+  @override
+  void initState() {
+    super.initState();
+    // load the user profile data.
+    profileCubit.fetchUserProfile(widget.uid);
+  }
+
   @override
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
     final isDesktop = res.width(100) >= 800; // Desktop breakpoint
-    return Scaffold(
-      appBar: AppBar(backgroundColor:  Theme.of(context).colorScheme.surface,),
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Center(
-        child: SafeArea(
-          child:  isDesktop
-                ? _buildDesktopLayout(context, res)
-                : _buildMobileLayout(context, res),
-        ),
-      ),
-    );
+    return BlocBuilder<CProfileCubit, CProfileState>(
+      builder: (context, state) {
+      // loaded
+      if (state is CProfileLoadedState) {
+      // get the current user
+      late CProfileUser? profileUser = state.profileUser;
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+          ),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          body: Center(
+            child: SafeArea(
+              child: isDesktop
+                  ? _buildDesktopLayout(context, res, profileUser)
+                  : _buildMobileLayout(context, res, profileUser),
+            ),
+          ),
+        );
+      }
+      // loading
+      else if (state is CProfileLoadingState) {
+        return const CLoadingScreen(loadingText: "Loading Your Profile...",);
+      } 
+      else {
+        return const Center(child: Text("Profile Not Found"));
+      }
+    });
   }
 
-  Widget _buildDesktopLayout(BuildContext context, ResponsiveHelper res) {
-    return Center(child: CProfileCardWidget(nm: currentUser!.name));
+  Widget _buildDesktopLayout(BuildContext context, ResponsiveHelper res, CProfileUser usr) {
+    return Center(child: CProfileCardWidget(user: usr));
   }
 
-  Widget _buildMobileLayout(BuildContext context, ResponsiveHelper res) {
+  Widget _buildMobileLayout(BuildContext context, ResponsiveHelper res, CProfileUser usr) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -50,7 +77,7 @@ class _CProfilePageState extends State<CProfilePage> {
             CircleAvatar(
               radius: res.width(20), // Adjust size dynamically
               backgroundColor: Colors.grey[300],
-              child:const Icon(Icons.person),
+              child: const Icon(Icons.person),
             ),
             Positioned(
               bottom: 0,
@@ -65,13 +92,10 @@ class _CProfilePageState extends State<CProfilePage> {
         ),
         const SizedBox(height: 10),
         Text(
-          currentUser!.name,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          usr.name,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        const Text(
-          "New York, United States",
-          style: TextStyle(fontSize: 14, color: Colors.grey),
-        ),
+        SizedBox(width:res.width(50),child: Text(usr.bio, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14))),
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -79,6 +103,26 @@ class _CProfilePageState extends State<CProfilePage> {
             _buildStatItem("65", "Photos"),
             _buildStatItem("43", "Followers"),
             _buildStatItem("21", "Following"),
+          ],
+        ),
+        SizedBox(height: res.height(2),),
+        Row(
+          children: [
+            SizedBox(width: res.width(20),),
+            Expanded(
+              child: CActionButton(
+                onPressed: () {
+                  Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => CProfileEditScreen(profUser: usr,)),
+                        );
+                },
+                label: "Edit Profile",
+                icon:Icons.edit
+              ),
+            ),
+            SizedBox(width: res.width(20),),
           ],
         ),
       ],

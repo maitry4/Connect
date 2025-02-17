@@ -1,3 +1,4 @@
+import 'package:connect/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:connect/features/home/presentation/components/sidebar_x.dart';
 import 'package:connect/features/home/presentation/cubits/navigation_cubit.dart';
 import 'package:connect/features/home/presentation/pages/home_page.dart';
@@ -17,14 +18,16 @@ class CMainScreen extends StatefulWidget {
 class _CMainScreenState extends State<CMainScreen> {
   final SidebarXController _controller = SidebarXController(selectedIndex: 0);
 
-  final List<Widget> pages = [
-    const CHomePage(),
-    const CProfilePage(),
-    const CSettingsPage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final user = context.read<CAuthCubit>().currentUser;
+    final uid = user!.uid; 
+    final List<Widget> pages = [
+      const CHomePage(),
+      CProfilePage(uid: uid),
+      const CSettingsPage(),
+    ];
+
     return Scaffold(
       body: Row(
         children: [
