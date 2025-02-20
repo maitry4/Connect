@@ -79,15 +79,6 @@ class _CProfilePageState extends State<CProfilePage> {
               backgroundColor: Colors.grey[300],
               child: const Icon(Icons.person),
             ),
-            Positioned(
-              bottom: 0,
-              right: res.width(5),
-              child: const CircleAvatar(
-                backgroundColor: Colors.pinkAccent,
-                radius: 15,
-                child: Icon(Icons.edit, size: 16, color: Colors.white),
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 10),

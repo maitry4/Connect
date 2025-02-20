@@ -1,54 +1,100 @@
+import 'dart:io';
 import 'package:connect/features/profile/data/firebase_profile_repo.dart';
 import 'package:connect/features/profile/presentation/cubits/profile_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CProfileCubit extends Cubit<CProfileState> {
   final CFirebaseProfileRepo profileRepo;
+
   CProfileCubit({required this.profileRepo}) : super(CProfileInitialState());
 
-  // fetch profile using repo
   Future<void> fetchUserProfile(String uid) async {
     try {
       emit(CProfileLoadingState());
       final user = await profileRepo.fetchUserProfile(uid);
-      if(user != null){
+      if (user != null) {
         emit(CProfileLoadedState(user));
-      }
-      else {
+      } else {
         emit(CProfileErrorState("User Not Found"));
       }
-    } catch(e) {
-        emit(CProfileErrorState(e.toString()));
+    } catch (e) {
+      emit(CProfileErrorState("Error fetching profile: ${e.toString()}"));
     }
   }
-  // update bio and or profile picture.
+
   Future<void> updateProfile({
     required String uid,
     String? newBio,
+    File? newProfileImage,
   }) async {
+    try {
       emit(CProfileLoadingState());
 
-      try {
-        // fetch the current profile first
-        final currentUser = await profileRepo.fetchUserProfile(uid);
+      final currentUser = await profileRepo.fetchUserProfile(uid);
+      if (currentUser == null) {
+        emit(CProfileErrorState("Failed to fetch user details"));
+        return;
+      }
 
-        if(currentUser == null) {
-          emit(CProfileErrorState("Failed to fetch the user details"));
+      String updatedImageUrl = currentUser.profileImageUrl;
+
+      if (newProfileImage != null) {
+        File? compressedImage = await _convertToWebP(newProfileImage);
+        if (compressedImage == null) {
+          print("Image compression failed!");
+          emit(CProfileErrorState("Failed to compress image"));
           return;
         }
 
-        // TODO:update profile picture
+        final uploadedImageUrl = await profileRepo.uploadProfileImage(compressedImage, uid);
+        if (uploadedImageUrl != null) {
+          updatedImageUrl = uploadedImageUrl;
 
-        // update new profile
-        final updatedProfile = currentUser.copyWith(newBio: newBio ?? currentUser.bio);
+          if (currentUser.profileImageUrl.isNotEmpty && currentUser.profileImageId != null) {
+            await profileRepo.deleteProfileImage(currentUser.profileImageUrl, currentUser.profileImageId);
+          }
+        } else {
+          emit(CProfileErrorState("Failed to upload profile image"));
+          return;
+        }
+      }
 
-        // update in the repostiory
-        await profileRepo.updateProfile(updatedProfile);
-        // re-fetch the updated profile
-        await fetchUserProfile(uid);
+      if (newBio == null && newProfileImage == null) {
+        emit(CProfileLoadedState(currentUser));
+        return;
       }
-      catch(e) {
-          emit(CProfileErrorState("Error updating the user details: $e"));
-      }
+
+      final updatedProfile = currentUser.copyWith(
+        newBio: newBio ?? currentUser.bio,
+        newProfileImageUrl: updatedImageUrl,
+      );
+
+      await profileRepo.updateProfile(updatedProfile);
+
+      emit(CProfileLoadedState(updatedProfile));
+    } catch (e) {
+      emit(CProfileErrorState("Error updating profile: ${e.toString()}"));
+    }
+  }
+
+  Future<File?> _convertToWebP(File imageFile) async {
+    try {
+      final directory = await getTemporaryDirectory();
+      String targetPath = '${directory.path}/compressed.webp';
+
+      var result = await FlutterImageCompress.compressAndGetFile(
+        imageFile.absolute.path,
+        targetPath,
+        format: CompressFormat.webp,
+        quality: 80,
+      );
+
+      return result != null ? File(result.path) : null;
+    } catch (e) {
+      print("Compression Error: $e");
+      return null;
+    }
   }
 }
