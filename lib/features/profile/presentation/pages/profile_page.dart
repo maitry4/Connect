@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connect/features/profile/domain/entities/profile_user.dart';
 import 'package:connect/features/profile/presentation/components/action_button.dart';
 import 'package:connect/features/profile/presentation/components/profile_card_widget.dart';
@@ -33,12 +34,11 @@ class _CProfilePageState extends State<CProfilePage> {
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
     final isDesktop = res.width(100) >= 800; // Desktop breakpoint
-    return BlocBuilder<CProfileCubit, CProfileState>(
-      builder: (context, state) {
+    return BlocBuilder<CProfileCubit, CProfileState>(builder: (context, state) {
       // loaded
       if (state is CProfileLoadedState) {
-      // get the current user
-      late CProfileUser? profileUser = state.profileUser;
+        // get the current user
+        late CProfileUser? profileUser = state.profileUser;
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
@@ -55,29 +55,42 @@ class _CProfilePageState extends State<CProfilePage> {
       }
       // loading
       else if (state is CProfileLoadingState) {
-        return const CLoadingScreen(loadingText: "Loading Your Profile...",);
-      } 
-      else {
+        return const CLoadingScreen(
+          loadingText: "Loading Your Profile...",
+        );
+      } else {
         return const Center(child: Text("Profile Not Found"));
       }
     });
   }
 
-  Widget _buildDesktopLayout(BuildContext context, ResponsiveHelper res, CProfileUser usr) {
+  Widget _buildDesktopLayout(
+      BuildContext context, ResponsiveHelper res, CProfileUser usr) {
     return Center(child: CProfileCardWidget(user: usr));
   }
 
-  Widget _buildMobileLayout(BuildContext context, ResponsiveHelper res, CProfileUser usr) {
+  Widget _buildMobileLayout(
+      BuildContext context, ResponsiveHelper res, CProfileUser usr) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Stack(
           alignment: Alignment.center,
           children: [
-            CircleAvatar(
-              radius: res.width(20), // Adjust size dynamically
-              backgroundColor: Colors.grey[300],
-              child: const Icon(Icons.person),
+            CachedNetworkImage(
+              imageUrl: usr.profileImageUrl,
+              imageBuilder: (context, imageProvider) => CircleAvatar(
+                radius: 50,
+                backgroundImage: imageProvider,
+              ),
+              placeholder: (context, url) => const CircleAvatar(
+                radius: 50,
+                child: CircularProgressIndicator(),
+              ),
+              errorWidget: (context, url, error) => const CircleAvatar(
+                radius: 50,
+                child: Icon(Icons.person, size: 50, color: Colors.grey),
+              ),
             ),
           ],
         ),
@@ -86,7 +99,11 @@ class _CProfilePageState extends State<CProfilePage> {
           usr.name,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        SizedBox(width:res.width(50),child: Text(usr.bio, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14))),
+        SizedBox(
+            width: res.width(50),
+            child: Text(usr.bio,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14))),
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -96,24 +113,31 @@ class _CProfilePageState extends State<CProfilePage> {
             _buildStatItem("21", "Following"),
           ],
         ),
-        SizedBox(height: res.height(2),),
+        SizedBox(
+          height: res.height(2),
+        ),
         Row(
           children: [
-            SizedBox(width: res.width(20),),
+            SizedBox(
+              width: res.width(20),
+            ),
             Expanded(
               child: CActionButton(
-                onPressed: () {
-                  Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CProfileEditScreen(profUser: usr,)),
-                        );
-                },
-                label: "Edit Profile",
-                icon:Icons.edit
-              ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CProfileEditScreen(
+                                profUser: usr,
+                              )),
+                    );
+                  },
+                  label: "Edit Profile",
+                  icon: Icons.edit),
             ),
-            SizedBox(width: res.width(20),),
+            SizedBox(
+              width: res.width(20),
+            ),
           ],
         ),
       ],

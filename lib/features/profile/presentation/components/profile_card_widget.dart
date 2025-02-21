@@ -3,6 +3,7 @@ import 'package:connect/features/profile/presentation/components/action_button.d
 import 'package:connect/features/profile/presentation/components/stats_widget.dart';
 import 'package:connect/features/profile/presentation/pages/profile_edit_page.dart';
 import 'package:connect/utils/responsive_helper.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class CProfileCardWidget extends StatefulWidget {
@@ -28,10 +29,20 @@ class _CProfileCardWidgetState extends State<CProfileCardWidget> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircleAvatar(
-                radius: 50,
-                child: Icon(Icons.person),
-                // backgroundImage: AssetImage('assets/profile.jpg'),
+              CachedNetworkImage(
+                imageUrl: widget.user.profileImageUrl,
+                imageBuilder: (context, imageProvider) => CircleAvatar(
+                  radius: 50,
+                  backgroundImage: imageProvider,
+                ),
+                placeholder: (context, url) => const CircleAvatar(
+                  radius: 50,
+                  child: CircularProgressIndicator(),
+                ),
+                errorWidget: (context, url, error) => const CircleAvatar(
+                  radius: 50,
+                  child: Icon(Icons.person, size: 50, color: Colors.grey),
+                ),
               ),
               const SizedBox(height: 10),
               Text(widget.user.name,
@@ -67,7 +78,8 @@ class _CProfileCardWidgetState extends State<CProfileCardWidget> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>  CProfileEditScreen(profUser: widget.user)),
+                              builder: (context) =>
+                                  CProfileEditScreen(profUser: widget.user)),
                         );
                       },
                     ),
