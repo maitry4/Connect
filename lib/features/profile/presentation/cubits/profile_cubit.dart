@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:image/image.dart' as img;
+
 import 'package:connect/features/profile/data/firebase_profile_repo.dart';
 import 'package:connect/features/profile/presentation/cubits/profile_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,6 +31,7 @@ class CProfileCubit extends Cubit<CProfileState> {
     required String uid,
     String? newBio,
     File? newProfileImage,
+    Uint8List? webImage,
   }) async {
     try {
       emit(CProfileLoadingState());
@@ -39,16 +43,16 @@ class CProfileCubit extends Cubit<CProfileState> {
       }
 
       String updatedImageUrl = currentUser.profileImageUrl;
+      dynamic compressedImage;
 
       if (newProfileImage != null) {
-        File? compressedImage = await _convertToWebP(newProfileImage);
-        if (compressedImage == null) {
-          print("Image compression failed!");
-          emit(CProfileErrorState("Failed to compress image"));
-          return;
-        }
+        compressedImage = await _convertToWebP(newProfileImage);
+      } else if (webImage != null) {
+        compressedImage = await _convertUint8ListToWebP(webImage);
+      }
 
-        final uploadedImageUrl = await profileRepo.uploadProfileImage(compressedImage, uid);
+      if (compressedImage != null) {
+        final uploadedImageUrl = await profileRepo.uploadProfileImage(uid,compressedImage);
         if (uploadedImageUrl != null) {
           updatedImageUrl = uploadedImageUrl;
 
@@ -61,18 +65,12 @@ class CProfileCubit extends Cubit<CProfileState> {
         }
       }
 
-      if (newBio == null && newProfileImage == null) {
-        emit(CProfileLoadedState(currentUser));
-        return;
-      }
-
       final updatedProfile = currentUser.copyWith(
         newBio: newBio ?? currentUser.bio,
         newProfileImageUrl: updatedImageUrl,
       );
 
       await profileRepo.updateProfile(updatedProfile);
-
       emit(CProfileLoadedState(updatedProfile));
     } catch (e) {
       emit(CProfileErrorState("Error updating profile: ${e.toString()}"));
@@ -97,4 +95,18 @@ class CProfileCubit extends Cubit<CProfileState> {
       return null;
     }
   }
+
+  Future<Uint8List> _convertUint8ListToWebP(Uint8List uint8list) async {
+  try {
+    final img.Image? image = img.decodeImage(uint8list);
+    if (image == null) return uint8list; // Return original if decoding fails
+
+    final jpgData = img.encodeJpg(image, quality: 70);
+    return Uint8List.fromList(jpgData); // Return compressed image
+  } catch (e) {
+    print("WebP Conversion Error: $e");
+    return uint8list; // Return original file in case of failure
+  }
+}
+
 }

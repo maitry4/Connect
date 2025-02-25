@@ -37,6 +37,7 @@ class _CProfileEditScreenState extends State<CProfileEditScreen> {
         uid: widget.profUser.uid,
         newBio: bioTextController.text,
         newProfileImage: _selectedImage, // Pass image file if selected
+        webImage: _webImage,
       );
     }
   }

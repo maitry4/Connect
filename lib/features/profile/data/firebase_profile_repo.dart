@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connect/features/profile/data/imagekit_repo.dart';
 import 'package:connect/features/profile/domain/entities/profile_user.dart';
@@ -46,27 +45,31 @@ class CFirebaseProfileRepo implements CProfileRepo {
   }
 
   @override
-  Future<String?> uploadProfileImage(File file, String uid) async {
-    try {
-      final imageUrl = await imageKitRepo.uploadImage(file);
-      if (imageUrl == null || imageUrl['url'] == null) {
-        print("Failed to upload image.");
-        return null;
-      }
-
-      final imageId = await imageKitRepo.getFileId(imageUrl['url']!);
-      if (imageId != null) {
-        await firebaseFirestore.collection('users').doc(uid).update({
-          'profileImageUrl': imageUrl['url'],
-          'profileImageId': imageId,
-        });
-      }
-      return imageUrl['url'];
-    } catch (e) {
-      print("Profile Image Upload Error: $e");
+  Future<String?> uploadProfileImage(String uid, dynamic file) async {
+  if (file == null) return null; // Ensure there's an image to upload
+  
+  try {
+    final imageUrl = await imageKitRepo.uploadImage(file, uid);
+    if (imageUrl == null || imageUrl['url'] == null) {
+      print("Failed to upload image.");
       return null;
     }
+
+    final imageId = await imageKitRepo.getFileId(imageUrl['url']!);
+    if (imageId != null) {
+      await firebaseFirestore.collection('users').doc(uid).update({
+        'profileImageUrl': imageUrl['url'],
+        'profileImageId': imageId,
+      });
+    }
+    
+    return imageUrl['url'];
+  } catch (e) {
+    print("Profile Image Upload Error: $e");
+    return null;
   }
+}
+
 
   @override
   Future<void> deleteProfileImage(String imageUrl, String? imageId) async {

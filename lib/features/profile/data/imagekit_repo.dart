@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:connect/config/api_keys.dart';
 import 'package:dio/dio.dart';
 
@@ -9,11 +10,20 @@ class ImageKitRepo {
   final String _uploadUrl = "https://upload.imagekit.io/api/v1/files/upload";
   final String _privateApiKey = image_kit_private_api;
 
-  Future<Map<String, String>?> uploadImage(File file) async {
+  Future<Map<String, String>?> uploadImage(dynamic file, String uid) async {
     try {
+      MultipartFile multipartFile;
+      if (file is File) {
+        multipartFile = await MultipartFile.fromFile(file.path);
+      } else if (file is Uint8List) {
+        multipartFile = MultipartFile.fromBytes(file, filename: "profile_$uid.webp");
+      } else {
+        return null;
+      }
+
       FormData formData = FormData.fromMap({
-        "file": await MultipartFile.fromFile(file.path),
-        "fileName": file.path.split('/').last,
+        "file": multipartFile,
+        "fileName": "profile_$uid.webp",
         "folder": "/user_profiles",
       });
 
@@ -38,7 +48,6 @@ class ImageKitRepo {
     }
     return null;
   }
-
   Future<void> deleteImage(String fileId) async {
     try {
       Response response = await _dio.delete(
