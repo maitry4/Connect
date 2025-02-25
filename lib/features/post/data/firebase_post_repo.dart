@@ -1,0 +1,96 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connect/features/post/data/imagekit_post_repo.dart';
+import 'package:connect/features/post/domain/entities/post.dart';
+import 'package:connect/features/post/domain/repos/post_repo.dart';
+
+class CFirebasePostRepo implements CPostRepo {
+  final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  final ImageKitPostRepo imageKitRepo = ImageKitPostRepo();
+
+  //Store posts in a separate collection called 'posts'
+  final CollectionReference postsCollection = FirebaseFirestore.instance.collection('posts');
+
+  @override
+  Future<void> createPost(CPost post) async {
+    try {
+      await postsCollection.doc(post.id).set(post.toJson());
+    } catch(e) {
+      throw Exception('Error creating post: $e');
+    }
+  }
+
+  @override
+  Future<void> deletePost(String postId) async {
+    await postsCollection.doc(postId).delete();
+  }
+
+  @override
+  Future<List<CPost>> fetchAllPosts() async {
+    try {
+      //get all the posts most recent should be on top
+      final postSnapshot = await postsCollection.orderBy('timestamp', descending:true).get();
+
+      // convert the json data to post format for each post in the list
+      final List<CPost> allPosts = postSnapshot.docs.map((doc) => CPost.fromJson(doc.data()as Map<String, dynamic>)).toList();
+
+      return allPosts;
+    } catch (e) {
+      throw Exception('Error Fetching Posts: $e');
+    }
+  }
+
+  @override
+  Future<List<CPost>> fetchPostsByUserId(String userId) async {
+    try {
+      //get all the posts of a specific user most recent should be on top
+      final postSnapshot = await postsCollection.where('userId', isEqualTo: userId).get();
+
+      // convert the json data to post format for each post in the list
+      final List<CPost> userPosts = postSnapshot.docs.map((doc) => CPost.fromJson(doc.data()as Map<String, dynamic>)).toList();
+
+      return userPosts;
+    } catch (e) {
+      throw Exception('Error Fetching User\'s Posts: $e');
+    }
+  }
+  @override
+  Future<String?> uploadPostImage(String pid, dynamic file) async {
+  if (file == null) return null; // Ensure there's an image to upload
+  
+  try {
+    final imageUrl = await imageKitRepo.uploadImage(file, pid);
+    if (imageUrl == null || imageUrl['url'] == null) {
+      print("Failed to upload image.");
+      return null;
+    }
+
+    final imageId = await imageKitRepo.getFileId(imageUrl['url']!);
+    if (imageId != null) {
+      await firebaseFirestore.collection('posts').doc(pid).update({
+        'imageUrl': imageUrl['url'],
+        'imageId': imageId,
+      });
+    }
+    
+    return imageUrl['url'];
+  } catch (e) {
+    print("Post Image Upload Error: $e");
+    return null;
+  }
+}
+@override
+ Future<void> deletePostImage(String imageUrl, String? imageId) async {
+    try {
+      if (imageId == null) {
+        print("No Image ID found for deletion.");
+        return;
+      }
+      await imageKitRepo.deleteImage(imageId);
+      print("Post image deleted successfully.");
+    } catch (e) {
+      print("Error deleting Post image: $e");
+      throw Exception("Failed to delete Post image.");
+    }
+  }
+
+}
