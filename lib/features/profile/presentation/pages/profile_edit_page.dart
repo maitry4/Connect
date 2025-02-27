@@ -181,6 +181,7 @@ class _CProfileEditScreenState extends State<CProfileEditScreen> {
           ),
           SizedBox(height: res.height(3)),
           CBioInputField(
+            text:"Bio",
             bioController: bioTextController,
           ),
           SizedBox(height: res.height(3)),

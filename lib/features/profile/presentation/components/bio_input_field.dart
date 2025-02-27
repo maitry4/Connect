@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 class CBioInputField extends StatelessWidget {
   final TextEditingController bioController;
-  const CBioInputField({super.key, required this.bioController});
+  final String text;
+  const CBioInputField({super.key, required this.bioController, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,7 @@ class CBioInputField extends StatelessWidget {
             color: Colors.black54,
             // size: res.width(5), // Responsive icon size
           ),
-          hintText: "Bio",
+          hintText: text,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(res.width(3)), // Responsive border radius
           ),

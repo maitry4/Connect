@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connect/features/profile/presentation/components/action_button.dart';
 import 'package:connect/features/profile/presentation/components/bio_input_field.dart';
 import 'package:connect/utils/responsive_helper.dart';
@@ -9,30 +7,27 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-class CProfileEditDesktop extends StatefulWidget {
-   Uint8List? webImage;
-  final TextEditingController bioController;
+class CCreatePostDesktop extends StatefulWidget {
+  Uint8List? webImage;
+  final TextEditingController captionController;
   final VoidCallback updateProfile;
-  final String profileImageUrl;
   final File? selectedImage;
   final void Function(File?, Uint8List?) setProfileImage;
-
-  CProfileEditDesktop({
+  CCreatePostDesktop({
     super.key,
-    required this.bioController,
+    required this.captionController,
     required this.updateProfile,
-    required this.profileImageUrl,
     required this.selectedImage,
     required this.setProfileImage,
     required this.webImage,
   });
 
   @override
-  State<CProfileEditDesktop> createState() => _CProfileEditDesktopState();
+  State<CCreatePostDesktop> createState() => _CCreatePostDesktopState();
 }
 
-class _CProfileEditDesktopState extends State<CProfileEditDesktop> {
-   Future<void> _pickImage() async {
+class _CCreatePostDesktopState extends State<CCreatePostDesktop> {
+  Future<void> _pickImage() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: kIsWeb, // For web, load image as Uint8List
@@ -48,6 +43,7 @@ class _CProfileEditDesktopState extends State<CProfileEditDesktop> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
@@ -55,6 +51,7 @@ class _CProfileEditDesktopState extends State<CProfileEditDesktop> {
       width: res.width(60),
       height: res.height(80),
       child: Card(
+        
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 10,
         child: Padding(
@@ -62,61 +59,67 @@ class _CProfileEditDesktopState extends State<CProfileEditDesktop> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(height: res.height(5)),
               Text(
-                "Edit Profile",
+                "Create Post",
                 style: TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: res.fontSize(2),
                 ),
               ),
-              SizedBox(height: res.height(5)),
-              Column(
-                children: [
-                  widget.selectedImage != null
-                  ? CircleAvatar(
-                      radius: 50,
-                      backgroundImage: FileImage(widget.selectedImage!),
-                    )
-                  : widget.webImage != null
-                      ? CircleAvatar(
-                          radius: 50,
-                          backgroundImage: MemoryImage(widget.webImage!), // For web
-                        )
-                      : CachedNetworkImage(
-                          imageUrl: widget.profileImageUrl,
-                          imageBuilder: (context, imageProvider) =>
-                              CircleAvatar(
-                            radius: 50,
-                            backgroundImage: imageProvider,
-                          ),
-                          placeholder: (context, url) => const CircleAvatar(
-                            radius: 50,
-                            child: CircularProgressIndicator(),
-                          ),
-                          errorWidget: (context, url, error) =>
-                              const CircleAvatar(
-                            radius: 50,
-                            child: Icon(Icons.person,
+              Stack(children: [
+                widget.selectedImage != null
+                    ? CircleAvatar(
+                        radius: 110,
+                        backgroundImage: FileImage(widget.selectedImage!),
+                      )
+                    : widget.webImage != null
+                        ? CircleAvatar(
+                            radius: 110,
+                            backgroundImage:
+                                MemoryImage(widget.webImage!), // For web
+                          )
+                        : const CircleAvatar(
+                            radius: 110,
+                            child: Icon(Icons.landscape,
                                 size: 50, color: Colors.grey),
                           ),
-                        ),
-                  SizedBox(height: res.height(1.5)),
-                  IconButton(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.camera_alt, color: Colors.blue),
+                Positioned(
+                  bottom: 10, // Adjust to move vertically
+                  right: 10, // Adjust to move horizontally
+                  child: Container(
+                    padding: const EdgeInsets.all(
+                        8), // Padding for better appearance
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 5,
+                          spreadRadius: 2,
+                        )
+                      ],
+                    ),
+                    child: IconButton(
+                      onPressed: _pickImage,
+                      icon: Icon(
+                        Icons.camera_alt,
+                        color: Theme.of(context).colorScheme.inversePrimary,
+                      ),
+                    ),
                   ),
-                  const Text("Pick Image"),
-                ],
-              ),
-              const SizedBox(height: 10),
+                ),
+              ]),
+              SizedBox(height: res.height(3)),
               SizedBox(
-                  width: res.width(20),
-                  child: CBioInputField(
-                    text: "Bio",
-                    bioController: widget.bioController,
-                  )),
+                width: res.width(20),
+                child: CBioInputField(
+                  text: "Caption",
+                  bioController: widget.captionController,
+                ),
+              ),
+              SizedBox(height: res.height(3)),
               Row(
                 children: [
                   SizedBox(width: res.width(7)),
