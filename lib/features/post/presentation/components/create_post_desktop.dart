@@ -10,15 +10,15 @@ import 'package:flutter/material.dart';
 class CCreatePostDesktop extends StatefulWidget {
   Uint8List? webImage;
   final TextEditingController captionController;
-  final VoidCallback updateProfile;
+  final VoidCallback createPost;
   final File? selectedImage;
-  final void Function(File?, Uint8List?) setProfileImage;
+  final void Function(File?, Uint8List?) setPostImage;
   CCreatePostDesktop({
     super.key,
     required this.captionController,
-    required this.updateProfile,
+    required this.createPost,
     required this.selectedImage,
-    required this.setProfileImage,
+    required this.setPostImage,
     required this.webImage,
   });
 
@@ -36,10 +36,10 @@ class _CCreatePostDesktopState extends State<CCreatePostDesktop> {
     if (result != null) {
       if (kIsWeb) {
         widget.webImage = result.files.single.bytes; // Web: Use bytes
-        widget.setProfileImage(null, widget.webImage);
+        widget.setPostImage(null, widget.webImage);
       } else {
         File newImage = File(result.files.single.path!); // Mobile: Use File
-        widget.setProfileImage(newImage, null);
+        widget.setPostImage(newImage, null);
       }
     }
   }
@@ -127,7 +127,7 @@ class _CCreatePostDesktopState extends State<CCreatePostDesktop> {
                     child: CActionButton(
                       icon: Icons.refresh,
                       label: "Save",
-                      onPressed: widget.updateProfile,
+                      onPressed: widget.createPost,
                     ),
                   ),
                   SizedBox(width: res.width(3)),

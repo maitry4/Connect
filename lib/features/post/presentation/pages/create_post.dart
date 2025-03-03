@@ -1,13 +1,18 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connect/features/auth/presentation/cubits/auth_cubit.dart';
+import 'package:connect/features/post/domain/entities/post.dart';
 import 'package:connect/features/post/presentation/components/create_post_desktop.dart';
+import 'package:connect/features/post/presentation/cubits/post_cubit.dart';
 import 'package:connect/features/profile/presentation/components/action_button.dart';
 import 'package:connect/features/profile/presentation/components/bio_input_field.dart';
 import 'package:connect/utils/responsive_helper.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CCreatePostPage extends StatefulWidget {
   const CCreatePostPage({super.key});
@@ -29,23 +34,68 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
     if (result != null) {
       if (kIsWeb) {
         _webImage = result.files.single.bytes; // Web: Use bytes
-        setProfileImage(null, _webImage);
+        setPostImage(null, _webImage);
       } else {
         File newImage = File(result.files.single.path!); // Mobile: Use File
-        setProfileImage(newImage, null);
+        setPostImage(newImage, null);
       }
     }
   }
 
-// Modify setProfileImage
-  void setProfileImage(File? image, Uint8List? webImage) {
+// Modify setPostImage
+  void setPostImage(File? image, Uint8List? webImage) {
     setState(() {
       _selectedImage = image;
       _webImage = webImage;
     });
   }
 
-  void createPost() {}
+  void createPost() async {
+    final postCubit = context.read<CPostCubit>();
+    final user = context.read<CAuthCubit>().currentUser;
+
+    if (captionTextController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Caption cannot be empty!")),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Creating post...")),
+    );
+
+    try {
+      final postId = FirebaseFirestore.instance.collection('posts').doc().id;
+
+      CPost newPost = CPost(
+        id: postId,
+        userId: user!.uid,
+        userName: user.name,
+        text: captionTextController.text.trim(),
+        imageUrl: '',
+        imageId: null,
+        timestamp: DateTime.now(),
+        likes: []
+      );
+
+      await postCubit.createPost(
+        newPost,
+        newPostImage: _selectedImage,
+        webPostImage: _webImage,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Post created successfully!")),
+      );
+      Navigator.pop(context);
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to create post: $error")),
+      );
+    }
+  }
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -78,9 +128,9 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
       child: CCreatePostDesktop(
         webImage: _webImage,
         captionController: captionTextController,
-        updateProfile: createPost,
+        createPost: createPost,
         selectedImage: _selectedImage, // New selected image (if any)
-        setProfileImage: setProfileImage, // Callback to update image
+        setPostImage: setPostImage, // Callback to update image
       ),
     );
   }
@@ -158,7 +208,7 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
                 child: CActionButton(
                   icon: Icons.refresh,
                   label: "Save",
-                  onPressed: () {},
+                  onPressed: createPost,
                 ),
               ),
               SizedBox(width: res.width(3)),

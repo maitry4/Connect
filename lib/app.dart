@@ -4,6 +4,9 @@ import 'package:connect/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:connect/features/auth/presentation/cubits/auth_states.dart';
 import 'package:connect/features/auth/presentation/pages/auth_page.dart';
 import 'package:connect/features/home/presentation/cubits/navigation_cubit.dart';
+import 'package:connect/features/post/data/firebase_post_repo.dart';
+import 'package:connect/features/post/data/imagekit_post_repo.dart';
+import 'package:connect/features/post/presentation/cubits/post_cubit.dart';
 import 'package:connect/features/profile/data/firebase_profile_repo.dart';
 import 'package:connect/features/profile/presentation/cubits/profile_cubit.dart';
 import 'package:connect/themes/light_mode.dart';
@@ -16,6 +19,8 @@ class MyApp extends StatelessWidget {
   // repos
   final authRepo = CFirebaseAuthRepo();
   final profileRepo = CFirebaseProfileRepo();
+  final postRepo = CFirebasePostRepo();
+  final imagekitRepo = ImageKitPostRepo();
   
   MyApp({super.key});
 
@@ -31,6 +36,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => CProfileCubit(profileRepo: profileRepo),
+        ),
+        BlocProvider(
+          create: (context) => CPostCubit(postRepo: postRepo, imageKitPostRepo: imagekitRepo),
         ),
       ],
       child: MaterialApp(

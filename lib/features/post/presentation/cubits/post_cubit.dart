@@ -81,6 +81,17 @@ class CPostCubit extends Cubit<CPostState> {
       emit(CPostsErrorState(e.toString()));
     }
   }
+  // Fetch posts created by a specific user
+    Future<void> fetchUserPosts(String userId) async {
+      emit(CPostsLoadingState());
+      try {
+        final posts = await postRepo.fetchAllPosts();
+        final userPosts = posts.where((post) => post.userId == userId).toList();
+        emit(CPostsLoadedState(userPosts));
+      } catch (e) {
+        emit(CPostsErrorState(e.toString()));
+      }
+    }
 
   // mobile compression
   Future<File?> _convertToWebP(File imageFile) async {
@@ -113,6 +124,15 @@ class CPostCubit extends Cubit<CPostState> {
     } catch (e) {
       print("WebP Conversion Error: $e");
       return uint8list; // Return original file in case of failure
+    }
+  }
+
+  // toggle like on a post
+  Future<void> toggleLikePost(String postId, String userId) async {
+    try {
+      await postRepo.toggleLikePosts(postId, userId);
+    } catch(e){
+      emit(CPostsErrorState('Falied to toggle like: $e'));
     }
   }
 }

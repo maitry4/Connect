@@ -92,5 +92,39 @@ class CFirebasePostRepo implements CPostRepo {
       throw Exception("Failed to delete Post image.");
     }
   }
+  
+  @override
+  Future<void> toggleLikePosts(String postId, String userId) async {
+    try //try to like or dislike
+    {
+      // get the post
+      final postDoc = await postsCollection.doc(postId).get();
+      // check if the post exists
+      if (postDoc.exists) {
+        // get the post data in json format
+        final post = CPost.fromJson(postDoc.data() as Map<String, dynamic>);
+
+        // check if user has already liked the post
+        final hasLiked = post.likes.contains(userId);
+
+        // update(like/dislike) based of the case
+        if(hasLiked){
+          post.likes.remove(userId);
+        } else{
+          post.likes.add(userId);
+        }
+
+        // update the post doc
+        await postsCollection.doc(postId).update({'likes':post.likes});
+      }
+      // throw error if you cannot get the post
+      else{
+        throw Exception('Post not found');
+      }
+    } // throw error if unable to like or dislike
+    catch (e) {
+      throw Exception('Error toggling like: $e');
+    }
+  }
 
 }

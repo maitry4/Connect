@@ -7,4 +7,5 @@ abstract class CPostRepo {
   Future<List<CPost>> fetchPostsByUserId(String userId);
   Future<String?> uploadPostImage(String pid, dynamic file);
   Future<void> deletePostImage(String imageUrl, String? imageId);
+  Future<void> toggleLikePosts(String postId, String userId);
 }

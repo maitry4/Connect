@@ -8,6 +8,7 @@ class CPost {
   final String imageUrl;
   final String? imageId;
   final DateTime timestamp;
+  final List<String> likes;
 
   CPost({
     required this.id,
@@ -17,6 +18,7 @@ class CPost {
     required this.imageUrl,
     required this.imageId,
     required this.timestamp,
+    required this.likes,
   });
 
   CPost copyWith({String? imageUrl, String? imageId}) {
@@ -27,7 +29,8 @@ class CPost {
       text: text,
       imageUrl: imageUrl ?? this.imageUrl,
       imageId: imageId ?? this.imageId,
-      timestamp: timestamp
+      timestamp: timestamp,
+      likes: likes
     );
   }
 
@@ -39,7 +42,8 @@ class CPost {
       'text':text,
       'imageUrl':imageUrl,
       'imageId':imageId,
-      'timestamp':Timestamp.fromDate(timestamp)
+      'timestamp':Timestamp.fromDate(timestamp),
+      'likes': likes,
     } ;
   }
 
@@ -52,6 +56,7 @@ class CPost {
       imageUrl: json['imageUrl'],
       imageId: json['imageId'],
       timestamp: (json['timestamp'] as Timestamp).toDate(),
+      likes: json['likes'],
     );
   }
 }

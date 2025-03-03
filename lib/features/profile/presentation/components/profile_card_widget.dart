@@ -19,8 +19,8 @@ class _CProfileCardWidgetState extends State<CProfileCardWidget> {
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
     return SizedBox(
-      width: res.width(60),
-      height: res.height(80),
+      width: res.width(50),
+      height: res.height(50),
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 10,
@@ -62,13 +62,7 @@ class _CProfileCardWidgetState extends State<CProfileCardWidget> {
               Row(
                 children: [
                   SizedBox(width: res.width(7)),
-                  Expanded(
-                    child: CActionButton(
-                      icon: Icons.camera,
-                      label: "Show Posts",
-                      onPressed: () {},
-                    ),
-                  ),
+                  
                   SizedBox(width: res.width(3)),
                   Expanded(
                     child: CActionButton(
