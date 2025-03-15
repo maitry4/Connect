@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connect/features/post/domain/entities/comment.dart';
 import 'package:connect/features/post/domain/entities/post.dart';
 import 'package:connect/features/post/presentation/cubits/post_cubit.dart';
+import 'package:connect/features/profile/presentation/components/bio_input_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,14 +18,55 @@ class CPostUi extends StatefulWidget {
 class _CPostUiState extends State<CPostUi> {
   late String currentUserId;
   late final CPostCubit postCubit;
-
+  final commentController = TextEditingController();
+  
   @override
   void initState() {
     super.initState();
     // Get current user's ID from Firebase Auth
     currentUserId = FirebaseAuth.instance.currentUser?.uid ?? "";
     postCubit = context.read<CPostCubit>();
-    postCubit.fetchAllPosts();
+  }
+  void openNewCommentBox() {
+    showDialog(
+      context: context, 
+      builder: (context) =>AlertDialog(
+        content: CBioInputField(
+          bioController: commentController,
+          text: "Type a Comment",
+          ),
+        actions: [
+          // cancel
+          TextButton(child: const Text("Cancel"),
+          onPressed: () => Navigator.of(context).pop()),
+          // save
+          TextButton(onPressed: () {
+            addComment();
+            Navigator.of(context).pop();
+          }, child: const Text("Save")),
+        ],
+      )
+      );
+  }
+  void addComment() {
+    // make a comment
+    final newComment = CComment(
+      id: DateTime.now().millisecondsSinceEpoch.toString(), 
+      postId: widget.post.id, 
+      userId: widget.post.userId, 
+      userName: widget.post.userName, 
+      text: commentController.text, 
+      timestamp: DateTime.now());
+
+    // add comment using cubit
+    if(commentController.text.isNotEmpty) {
+      postCubit.addComment(widget.post.id, newComment);
+    }
+  }
+  @override
+  void dispose() {
+    super.dispose();
+    commentController.dispose();
   }
   void toggleLikePost() {
     // get current like status:
@@ -100,11 +143,22 @@ class _CPostUiState extends State<CPostUi> {
                 Text(widget.post.likes.length.toString()),
             
                  SizedBox(width:20),
-                Icon(Icons.comment),
-                Text("0")
+                GestureDetector(
+                  onTap: openNewCommentBox,
+                  child: Icon(Icons.comment)),
+                Text(widget.post.comments.length.toString())
               ],
             ),
-          )
+          ),
+          // Caption
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(widget.post.userName),
+              Text(widget.post.text)
+            ],
+          ),
+
         ],
       ),
     );

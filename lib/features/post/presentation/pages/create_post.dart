@@ -25,6 +25,20 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
   final captionTextController = TextEditingController();
   File? _selectedImage;
   Uint8List? _webImage;
+  late String ccurrentUserId;
+  late String currentUserName;
+  late final CPostCubit postCubit;
+  @override
+  void initState() {
+    super.initState();
+    // Get current user's ID from Firebase Auth
+    
+    postCubit = context.read<CPostCubit>();
+    final authCubit = context.read<CAuthCubit>();
+    final user = authCubit.currentUser;
+    ccurrentUserId = user?.uid ?? "";
+    currentUserName = user?.name ?? "Anonymous";
+  }
   Future<void> _pickImage() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -70,13 +84,14 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
 
       CPost newPost = CPost(
         id: postId,
-        userId: user!.uid,
-        userName: user.name,
+        userId: ccurrentUserId,
+        userName: currentUserName,
         text: captionTextController.text.trim(),
         imageUrl: '',
         imageId: null,
         timestamp: DateTime.now(),
-        likes: []
+        likes: [],
+        comments: [],
       );
 
       await postCubit.createPost(

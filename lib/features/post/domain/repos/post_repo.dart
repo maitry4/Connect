@@ -1,3 +1,4 @@
+import 'package:connect/features/post/domain/entities/comment.dart';
 import 'package:connect/features/post/domain/entities/post.dart';
 
 abstract class CPostRepo {
@@ -8,4 +9,6 @@ abstract class CPostRepo {
   Future<String?> uploadPostImage(String pid, dynamic file);
   Future<void> deletePostImage(String imageUrl, String? imageId);
   Future<void> toggleLikePosts(String postId, String userId);
+  Future<void> addComment(String postId, CComment comment);
+  Future<void> deleteComment(String postId, String commentId);
 }

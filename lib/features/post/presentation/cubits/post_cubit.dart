@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:connect/features/post/data/firebase_post_repo.dart';
 import 'package:connect/features/post/data/imagekit_post_repo.dart';
+import 'package:connect/features/post/domain/entities/comment.dart';
 import 'package:connect/features/post/domain/entities/post.dart';
 import 'package:connect/features/post/presentation/cubits/post_states.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -81,6 +82,7 @@ class CPostCubit extends Cubit<CPostState> {
       emit(CPostsErrorState(e.toString()));
     }
   }
+  
   // Fetch posts created by a specific user
     Future<void> fetchUserPosts(String userId) async {
       emit(CPostsLoadingState());
@@ -133,6 +135,28 @@ class CPostCubit extends Cubit<CPostState> {
       await postRepo.toggleLikePosts(postId, userId);
     } catch(e){
       emit(CPostsErrorState('Falied to toggle like: $e'));
+    }
+  }
+
+  // add a comment to the post
+  Future<void> addComment(String postId, CComment comment) async {
+    try {
+      await postRepo.addComment(postId, comment);
+      await fetchAllPosts();
+    }
+    catch (e) {
+      emit(CPostsErrorState("Failed to add comment: $e"));
+    }
+  }
+
+  // delete a comment from the post
+  Future<void> deleteComment(String postId, String commentId) async {
+    try {
+      await postRepo.deleteComment(postId, commentId);
+      await fetchAllPosts();
+    }
+    catch (e) {
+      emit(CPostsErrorState("Failed to delete comment: $e"));
     }
   }
 }

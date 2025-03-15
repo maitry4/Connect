@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connect/features/post/domain/entities/comment.dart';
 
 class CPost {
   final String id;
@@ -9,6 +10,7 @@ class CPost {
   final String? imageId;
   final DateTime timestamp;
   final List<String> likes;
+  final List<CComment> comments;
 
   CPost({
     required this.id,
@@ -19,9 +21,10 @@ class CPost {
     required this.imageId,
     required this.timestamp,
     required this.likes,
+    required this.comments,
   });
 
-  CPost copyWith({String? imageUrl, String? imageId}) {
+  CPost copyWith({String? imageUrl, String? imageId, List<String>? likes, List<CComment>? comments}) {
     return CPost(
       id: id,
       userId: userId,
@@ -30,7 +33,8 @@ class CPost {
       imageUrl: imageUrl ?? this.imageUrl,
       imageId: imageId ?? this.imageId,
       timestamp: timestamp,
-      likes: likes
+      likes: likes ?? this.likes,
+      comments: comments?? this.comments,
     );
   }
 
@@ -44,10 +48,13 @@ class CPost {
       'imageId':imageId,
       'timestamp':Timestamp.fromDate(timestamp),
       'likes': likes,
+      'comments': comments.map((comment) => comment.toJson()).toList(),
     } ;
   }
 
   factory CPost.fromJson(Map<String,dynamic> json) {
+    final List<CComment> comments = (json['comments'] as List<dynamic>?)?.map((commentJson)=> CComment.fromJson(commentJson)).toList()??[];
+    
     return CPost(
       id: json['id'],
       userId: json['userId'],
@@ -56,7 +63,8 @@ class CPost {
       imageUrl: json['imageUrl'],
       imageId: json['imageId'],
       timestamp: (json['timestamp'] as Timestamp).toDate(),
-      likes: json['likes'],
+      likes: List<String>.from(json['likes'] ?? []),
+      comments: comments,
     );
   }
 }

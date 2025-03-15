@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connect/features/post/data/imagekit_post_repo.dart';
+import 'package:connect/features/post/domain/entities/comment.dart';
 import 'package:connect/features/post/domain/entities/post.dart';
 import 'package:connect/features/post/domain/repos/post_repo.dart';
 
@@ -124,6 +125,60 @@ class CFirebasePostRepo implements CPostRepo {
     } // throw error if unable to like or dislike
     catch (e) {
       throw Exception('Error toggling like: $e');
+    }
+  }
+
+  @override
+  Future<void> addComment(String postId, CComment comment) async {
+    try {
+      // get the post doc
+      final postDoc = await postsCollection.doc(postId).get();
+
+      if(postDoc.exists) {
+        // json to object
+        final post = CPost.fromJson(postDoc.data() as Map<String, dynamic>);
+
+        // add the comment
+        post.comments.add(comment);
+
+        // update in firebase
+        await postsCollection.doc(postId).update({
+          'comments': post.comments.map((comment) => comment.toJson()).toList()
+        });
+      }
+      else {
+        throw Exception("Post not Found");
+      }
+    }
+    catch (e) {
+      throw Exception("Error adding comment: $e");
+    }
+  }
+
+  @override
+  Future<void> deleteComment(String postId, String commentId) async {
+    try {
+      // get the post doc
+      final postDoc = await postsCollection.doc(postId).get();
+
+      if(postDoc.exists) {
+        // json to object
+        final post = CPost.fromJson(postDoc.data() as Map<String, dynamic>);
+
+        // add the comment
+        post.comments.removeWhere((comment) => comment.id == commentId);
+
+        // update in firebase
+        await postsCollection.doc(postId).update({
+          'comments': post.comments.map((comment) => comment.toJson()).toList()
+        });
+      }
+      else {
+        throw Exception("Post not Found");
+      }
+    }
+    catch (e) {
+      throw Exception("Error deleting comment: $e");
     }
   }
 
