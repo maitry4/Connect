@@ -11,6 +11,7 @@ class CPost {
   final DateTime timestamp;
   final List<String> likes;
   final List<CComment> comments;
+  final bool private;
 
   CPost({
     required this.id,
@@ -22,6 +23,7 @@ class CPost {
     required this.timestamp,
     required this.likes,
     required this.comments,
+    required this.private,
   });
 
   CPost copyWith({String? imageUrl, String? imageId, List<String>? likes, List<CComment>? comments}) {
@@ -35,6 +37,7 @@ class CPost {
       timestamp: timestamp,
       likes: likes ?? this.likes,
       comments: comments?? this.comments,
+      private: private
     );
   }
 
@@ -49,6 +52,7 @@ class CPost {
       'timestamp':Timestamp.fromDate(timestamp),
       'likes': likes,
       'comments': comments.map((comment) => comment.toJson()).toList(),
+      'private':private
     } ;
   }
 
@@ -65,6 +69,7 @@ class CPost {
       timestamp: (json['timestamp'] as Timestamp).toDate(),
       likes: List<String>.from(json['likes'] ?? []),
       comments: comments,
+      private: json['private'],
     );
   }
 }

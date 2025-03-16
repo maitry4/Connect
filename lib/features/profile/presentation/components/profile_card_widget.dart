@@ -1,5 +1,6 @@
 import 'package:connect/features/profile/domain/entities/profile_user.dart';
 import 'package:connect/features/profile/presentation/components/action_button.dart';
+import 'package:connect/features/profile/presentation/components/follow_button.dart';
 import 'package:connect/features/profile/presentation/components/stats_widget.dart';
 import 'package:connect/features/profile/presentation/pages/profile_edit_page.dart';
 import 'package:connect/utils/responsive_helper.dart';
@@ -10,7 +11,8 @@ class CProfileCardWidget extends StatefulWidget {
   final CProfileUser user;
   String uid;
   String currentUserId;
-  CProfileCardWidget({super.key, required this.user, String this.uid="", String this.currentUserId =""});
+  final VoidCallback followButtonPress;
+  CProfileCardWidget({super.key, required this.user, required this.followButtonPress,String this.uid="", String this.currentUserId =""});
 
   @override
   State<CProfileCardWidget> createState() => _CProfileCardWidgetState();
@@ -81,6 +83,14 @@ class _CProfileCardWidgetState extends State<CProfileCardWidget> {
                       },
                     ),
                   ),
+                  if(widget.uid != widget.currentUserId)
+                  Expanded(
+                    child: CFollowButton(
+                      onPressed: widget.followButtonPress,
+                      isFollowing: widget.user.followers.contains(widget.currentUserId),
+                    ),
+                  ),
+
                   SizedBox(width: res.width(7)),
                 ],
               ),

@@ -91,4 +91,52 @@ class CFirebaseProfileRepo implements CProfileRepo {
       throw Exception("Failed to delete profile image.");
     }
   }
+  
+  @override
+  Future<void> toggleFollow(String currentUid, String targetUid) async {
+    try {
+      // get both the users
+      final currentUserDoc = await firebaseFirestore.collection('users').doc(currentUid).get();
+      final targetUserDoc = await firebaseFirestore.collection('users').doc(targetUid).get();
+
+      // see if they are present
+      if (currentUserDoc.exists && targetUserDoc.exists) {
+        // get data from both
+        final currentUserData = currentUserDoc.data();
+        final targetUserData = targetUserDoc.data();
+
+        // check if the data is correct
+        if (currentUserData != null && targetUserData != null){
+          // get current followings
+          final List<String> currentFollowing = List<String>.from(currentUserData['following'] ?? []);
+
+          // check if the user is already following the target user.
+          if(currentFollowing.contains(targetUid)) {
+            // unfollow
+            // remove from current user
+            await firebaseFirestore.collection('users').doc(currentUid).update({
+              'following':FieldValue.arrayRemove([targetUid]),
+            });
+            // remove from target user
+            await firebaseFirestore.collection('users').doc(targetUid).update({
+              'followers':FieldValue.arrayRemove([currentUid]),
+            });
+          } else {
+            // follow
+            // add to current user
+            await firebaseFirestore.collection('users').doc(currentUid).update({
+              'following':FieldValue.arrayUnion([targetUid]),
+            });
+            // remove from target user
+            await firebaseFirestore.collection('users').doc(targetUid).update({
+              'followers':FieldValue.arrayUnion([currentUid]),
+            });
+          }
+        }
+      }
+    } catch(e) {
+
+    }
+  }
+  
 }

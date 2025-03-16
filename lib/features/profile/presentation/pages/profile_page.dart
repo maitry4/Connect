@@ -5,6 +5,7 @@ import 'package:connect/features/post/presentation/cubits/post_cubit.dart';
 import 'package:connect/features/post/presentation/cubits/post_states.dart';
 import 'package:connect/features/profile/domain/entities/profile_user.dart';
 import 'package:connect/features/profile/presentation/components/action_button.dart';
+import 'package:connect/features/profile/presentation/components/follow_button.dart';
 import 'package:connect/features/profile/presentation/components/profile_card_widget.dart';
 import 'package:connect/features/profile/presentation/cubits/profile_cubit.dart';
 import 'package:connect/features/profile/presentation/cubits/profile_state.dart';
@@ -18,7 +19,11 @@ class CProfilePage extends StatefulWidget {
   final String uid;
   bool fromHome;
   String currentUserId;
-  CProfilePage({super.key, required this.uid, this.fromHome = false, this.currentUserId="d"});
+  CProfilePage(
+      {super.key,
+      required this.uid,
+      this.fromHome = false,
+      this.currentUserId = "d"});
 
   @override
   State<CProfilePage> createState() => _CProfilePageState();
@@ -39,6 +44,37 @@ class _CProfilePageState extends State<CProfilePage> {
     postCubit.fetchUserPosts(widget.uid);
   }
 
+  void followButtonPress() {
+    final profileState = profileCubit.state;
+    if (profileState is! CProfileLoadedState) {
+      return; //couldn't load the profile
+    }
+    final profileUser = profileState.profileUser;
+    final isFollowing = profileUser.followers.contains(widget.currentUserId);
+
+    // optimistically update the UI
+    setState(() {
+      if (isFollowing) {
+        profileUser.followers.remove(widget.currentUserId);
+      } else {
+        profileUser.followers.add(widget.currentUserId);
+      }
+    });
+    // perform toggle in cubit
+    profileCubit
+        .toggleFollow(widget.currentUserId, widget.uid)
+        .catchError((error) {
+      // remove update if there was an error toggling in the database
+      setState(() {
+        if (isFollowing) {
+          profileUser.followers.add(widget.currentUserId);
+        } else {
+          profileUser.followers.remove(widget.currentUserId);
+        }
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final res = ResponsiveHelper(context);
@@ -56,7 +92,9 @@ class _CProfilePageState extends State<CProfilePage> {
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () {
                       Navigator.pop(context);
-                      context.read<CPostCubit>().fetchAllPosts(); // Refresh home on return
+                      context
+                          .read<CPostCubit>()
+                          .fetchAllPosts(); // Refresh home on return
                     },
                   )
                 : null,
@@ -87,7 +125,12 @@ class _CProfilePageState extends State<CProfilePage> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          CProfileCardWidget(user: usr,uid:widget.uid, currentUserId: widget.currentUserId,),
+          CProfileCardWidget(
+            user: usr,
+            uid: widget.uid,
+            currentUserId: widget.currentUserId,
+            followButtonPress: followButtonPress,
+          ),
           SizedBox(
             width: 1400,
             height: 500,
@@ -101,7 +144,10 @@ class _CProfilePageState extends State<CProfilePage> {
                     child: GridView.count(
                       crossAxisCount: 3,
                       children: state.posts
-                          .map((post) => CPostUiDesktop(post: post, profileImageUrl: usr.profileImageUrl,))
+                          .map((post) => CPostUiDesktop(
+                                post: post,
+                                profileImageUrl: usr.profileImageUrl,
+                              ))
                           .toList(),
                     ),
                   );
@@ -128,8 +174,12 @@ class _CProfilePageState extends State<CProfilePage> {
                 return const CircularProgressIndicator();
               } else if (state is CPostsLoadedState) {
                 return ListView(
-                  children:
-                      state.posts.map((post) => CPostUi(post: post, profileImageUrl: usr.profileImageUrl,)).toList(),
+                  children: state.posts
+                      .map((post) => CPostUi(
+                            post: post,
+                            profileImageUrl: usr.profileImageUrl,
+                          ))
+                      .toList(),
                 );
               } else {
                 return const Center(child: Text("No posts found"));
@@ -193,24 +243,29 @@ class _CProfilePageState extends State<CProfilePage> {
           children: [
             _buildStatItem(
                 "65", "Photos"), // Temporary values (Replace dynamically)
-            _buildStatItem("43", "Followers"),
-            _buildStatItem("21", "Following"),
+            _buildStatItem(usr.followers.length.toString(), "Followers"),
+            _buildStatItem(usr.following.length.toString(), "Following"),
           ],
         ),
         const SizedBox(height: 20),
         if (widget.uid == widget.currentUserId)
-        CActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CProfileEditScreen(profUser: usr),
-              ),
-            );
-          },
-          label: " Edit Profile   ",
-          icon: Icons.edit,
-        ),
+          CActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CProfileEditScreen(profUser: usr),
+                ),
+              );
+            },
+            label: " Edit Profile   ",
+            icon: Icons.edit,
+          ),
+        if (widget.uid != widget.currentUserId)
+          CFollowButton(
+            onPressed: followButtonPress,
+            isFollowing: usr.followers.contains(widget.currentUserId),
+          ),
       ],
     );
   }

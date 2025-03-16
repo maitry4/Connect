@@ -146,5 +146,13 @@ class CProfileCubit extends Cubit<CProfileState> {
     return uint8list; // Return original file in case of failure
   }
 }
-
+  Future<void> toggleFollow(String currentUid, String targetUid) async {
+    try {
+      await profileRepo.toggleFollow(currentUid, targetUid);
+      await fetchUserProfile(targetUid);
+    }
+    catch(e) {
+      emit(CProfileErrorState("Error : $e"));
+    }
+  }
 }

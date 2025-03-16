@@ -92,6 +92,7 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
         timestamp: DateTime.now(),
         likes: [],
         comments: [],
+        private: false
       );
 
       await postCubit.createPost(

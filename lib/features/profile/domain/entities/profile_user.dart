@@ -4,6 +4,8 @@ class CProfileUser extends CAppUser {
   final String bio;
   final String profileImageUrl;
   final String? profileImageId; // Added fileId
+  final List<String> followers;
+  final List<String> following;
 
   CProfileUser({
     required super.uid,
@@ -12,10 +14,18 @@ class CProfileUser extends CAppUser {
     required this.bio,
     required this.profileImageUrl,
     this.profileImageId,
+    required this.followers,
+    required this.following,
   });
 
   // Method to update profile user
-  CProfileUser copyWith({String? newBio, String? newProfileImageUrl, String? newProfileImageId}) {
+  CProfileUser copyWith({
+    String? newBio, 
+    String? newProfileImageUrl, 
+    String? newProfileImageId,
+    List<String>? newFollowers,
+    List<String>? newFollowing,
+    }) {
     return CProfileUser(
       uid: uid, 
       email: email, 
@@ -23,6 +33,8 @@ class CProfileUser extends CAppUser {
       bio: newBio ?? bio, 
       profileImageUrl: newProfileImageUrl ?? profileImageUrl,
       profileImageId: newProfileImageId ?? profileImageId,
+      followers: newFollowers??followers,
+      following: newFollowing??following,
     );
   }
 
@@ -36,6 +48,8 @@ class CProfileUser extends CAppUser {
       'bio': bio,
       'profileImageUrl': profileImageUrl,
       'profileImageId': profileImageId,
+      'followers':followers,
+      'following':following,
     };
   }
 
@@ -47,6 +61,8 @@ class CProfileUser extends CAppUser {
       bio: jsonUser['bio'],
       profileImageUrl: jsonUser['profileImageUrl'],
       profileImageId: jsonUser['profileImageId'],
+      followers: List<String>.from(jsonUser['followers'] ?? []),
+      following: List<String>.from(jsonUser['following'] ?? []),
     );
   }
 }
