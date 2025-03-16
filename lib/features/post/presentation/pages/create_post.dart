@@ -70,13 +70,13 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
 
     if (captionTextController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Caption cannot be empty!")),
+        const SnackBar(content: Text("Caption cannot be empty!")),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Creating post...")),
+      const SnackBar(content: Text("Creating post...")),
     );
 
     try {
@@ -101,7 +101,7 @@ class _CCreatePostPageState extends State<CCreatePostPage> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Post created successfully!")),
+        const SnackBar(content: Text("Post created successfully!")),
       );
       Navigator.pop(context);
     } catch (error) {

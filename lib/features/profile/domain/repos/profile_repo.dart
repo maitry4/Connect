@@ -5,4 +5,5 @@ abstract class CProfileRepo {
   Future<void> updateProfile(CProfileUser updatedProfile);
   Future<String?> uploadProfileImage(String uid, dynamic file);
   Future<void> deleteProfileImage(String imageUrl, String? imageId);
+  Future<List<CProfileUser>> fetchMultipleUserProfiles(List<String> userIds);
 }

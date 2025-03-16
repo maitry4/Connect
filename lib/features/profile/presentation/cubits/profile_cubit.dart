@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:connect/features/profile/domain/entities/profile_user.dart';
 import 'package:image/image.dart' as img;
 
 import 'package:connect/features/profile/data/firebase_profile_repo.dart';
@@ -10,14 +11,23 @@ import 'package:path_provider/path_provider.dart';
 
 class CProfileCubit extends Cubit<CProfileState> {
   final CFirebaseProfileRepo profileRepo;
+  // Cache to store fetched user profiles
+  final Map<String, CProfileUser> _profileCache = {};
 
   CProfileCubit({required this.profileRepo}) : super(CProfileInitialState());
 
+  // Fetch a single user profile (checks cache first)
   Future<void> fetchUserProfile(String uid) async {
+    if (_profileCache.containsKey(uid)) {
+      emit(CProfileLoadedState(_profileCache[uid]!));
+      return;
+    }
+
     try {
       emit(CProfileLoadingState());
       final user = await profileRepo.fetchUserProfile(uid);
       if (user != null) {
+        _profileCache[uid] = user;
         emit(CProfileLoadedState(user));
       } else {
         emit(CProfileErrorState("User Not Found"));
@@ -25,6 +35,34 @@ class CProfileCubit extends Cubit<CProfileState> {
     } catch (e) {
       emit(CProfileErrorState("Error fetching profile: ${e.toString()}"));
     }
+  }
+
+  // Fetch multiple user profiles at once and store in cache
+  Future<void> fetchUserProfiles(List<String> userIds) async {
+    try {
+      emit(CProfileLoadingState());
+
+      // Fetch only profiles not in cache
+      List<String> idsToFetch = userIds.where((id) => !_profileCache.containsKey(id)).toList();
+      if (idsToFetch.isEmpty) {
+        emit(CProfilesLoadedState(_profileCache.values.toList()));
+        return;
+      }
+
+      final users = await profileRepo.fetchMultipleUserProfiles(idsToFetch);
+      for (var user in users) {
+        _profileCache[user.uid] = user;
+      }
+
+      emit(CProfilesLoadedState(_profileCache.values.toList()));
+    } catch (e) {
+      emit(CProfileErrorState("Error fetching profiles: ${e.toString()}"));
+    }
+  }
+
+  // Get a user profile from cache
+  CProfileUser? getCachedProfile(String uid) {
+    return _profileCache[uid];
   }
 
   Future<void> updateProfile({

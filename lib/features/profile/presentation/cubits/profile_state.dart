@@ -6,10 +6,16 @@ abstract class CProfileState {}
 class CProfileInitialState extends CProfileState {}
 // loading
 class CProfileLoadingState extends CProfileState {}
-// loaded
+// Loaded (Single User)
 class CProfileLoadedState extends CProfileState {
   final CProfileUser profileUser;
   CProfileLoadedState(this.profileUser);
+}
+
+// Loaded (Multiple Users)
+class CProfilesLoadedState extends CProfileState {
+  final List<CProfileUser> profiles;
+  CProfilesLoadedState(this.profiles);
 }
 // error
 class CProfileErrorState extends CProfileState {

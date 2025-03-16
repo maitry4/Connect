@@ -6,13 +6,16 @@ import 'package:connect/features/post/domain/entities/post.dart';
 import 'package:connect/features/post/presentation/cubits/post_cubit.dart';
 import 'package:connect/features/post/presentation/cubits/post_states.dart';
 import 'package:connect/features/profile/presentation/components/bio_input_field.dart';
+import 'package:connect/features/profile/presentation/pages/profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CPostUiDesktop extends StatefulWidget {
   final CPost post;
-  const CPostUiDesktop({super.key, required this.post});
+  final String profileImageUrl;
+  const CPostUiDesktop(
+      {super.key, required this.post, required this.profileImageUrl});
 
   @override
   State<CPostUiDesktop> createState() => _CPostUiDesktopState();
@@ -48,7 +51,10 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
               actions: [
                 // cancel
                 TextButton(
-                    child:  Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary)),
+                    child: Text("Cancel",
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.inversePrimary)),
                     onPressed: () => Navigator.of(context).pop()),
                 // save
                 TextButton(
@@ -56,7 +62,10 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
                       addComment();
                       Navigator.of(context).pop();
                     },
-                    child:  Text("Save", style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary))),
+                    child: Text("Save",
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.inversePrimary))),
               ],
             ));
   }
@@ -81,7 +90,7 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("All Comments"),
+        title: const Text("All Comments"),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -100,7 +109,7 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text("Close"),
+            child: const Text("Close"),
           ),
         ],
       ),
@@ -145,19 +154,35 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
       child: Column(
         children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Row(
-              children: [
-                const SizedBox(
-                  width: 8.0,
-                ),
-                const CircleAvatar(
-                  child: Icon(Icons.person),
-                ),
-                const SizedBox(
-                  width: 5.0,
-                ),
-                Text(widget.post.userName),
-              ],
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CProfilePage(
+                      uid: widget.post.userId,
+                      fromHome: true,
+                      currentUserId: currentUserId,
+                    ),
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  const SizedBox(width: 8.0),
+                  CircleAvatar(
+                    backgroundImage: widget.profileImageUrl.isNotEmpty
+                        ? CachedNetworkImageProvider(widget.profileImageUrl)
+                        : null,
+                    radius: 20,
+                    child: widget.profileImageUrl.isEmpty
+                        ? const Icon(Icons.person)
+                        : null,
+                  ),
+                  const SizedBox(width: 5.0),
+                  Text(widget.post.userName),
+                ],
+              ),
             ),
             if (widget.post.userId == currentUserId)
               IconButton(
@@ -189,9 +214,9 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
                             ? Colors.red
                             : Colors.black)),
                 Text(widget.post.likes.length.toString()),
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
                 GestureDetector(
-                    onTap: openNewCommentBox, child: Icon(Icons.comment)),
+                    onTap: openNewCommentBox, child: const Icon(Icons.comment)),
                 Text(widget.post.comments.length.toString()),
               ],
             ),
@@ -202,9 +227,9 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
             children: [
               Text(
                 widget.post.userName,
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(
+              const SizedBox(
                 width: 10,
               ),
               Text(widget.post.text)
@@ -212,42 +237,48 @@ class _CPostUiDesktopState extends State<CPostUiDesktop> {
           ),
           // comment section
           BlocBuilder<CPostCubit, CPostState>(builder: (context, state) {
-          if (state is CPostsLoadedState) {
-            final post = state.posts.firstWhere((p) => p.id == widget.post.id);
-            if (post.comments.isNotEmpty) {
-              int commentCount = post.comments.length;
+            if (state is CPostsLoadedState) {
+              final post =
+                  state.posts.firstWhere((p) => p.id == widget.post.id);
+              if (post.comments.isNotEmpty) {
+                int commentCount = post.comments.length;
 
-              int showCommentCount = post.comments.length;
-              if(showCommentCount >1) {
-                showCommentCount = 1;
-              } // Show only first 
+                int showCommentCount = post.comments.length;
+                if (showCommentCount > 1) {
+                  showCommentCount = 1;
+                } // Show only first
 
-              return Column(
-                children: [
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: showCommentCount,
-                    itemBuilder: (context, index) {
-                      final comment = post.comments[index];
-                       return CCommentTile(
-                        comment: comment,
-                        currentUserId: currentUserId,
-                        postId: widget.post.id,
-                      );
-                    },
-                  ),
-                  if (commentCount > 3) 
-                    TextButton(
-                      onPressed: () => showAllCommentsDialog(post.comments),
-                      child: Text("Read More", style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),),
+                return Column(
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: showCommentCount,
+                      itemBuilder: (context, index) {
+                        final comment = post.comments[index];
+                        return CCommentTile(
+                          comment: comment,
+                          currentUserId: currentUserId,
+                          postId: widget.post.id,
+                        );
+                      },
                     ),
-                ],
-              );
+                    if (commentCount > 1)
+                      TextButton(
+                        onPressed: () => showAllCommentsDialog(post.comments),
+                        child: Text(
+                          "Read More",
+                          style: TextStyle(
+                              color:
+                                  Theme.of(context).colorScheme.inversePrimary),
+                        ),
+                      ),
+                  ],
+                );
+              }
             }
-          }
-          return SizedBox();
-        }),
+            return const SizedBox();
+          }),
         ],
       ),
     );

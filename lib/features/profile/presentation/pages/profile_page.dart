@@ -16,7 +16,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CProfilePage extends StatefulWidget {
   final String uid;
-  const CProfilePage({super.key, required this.uid});
+  bool fromHome;
+  String currentUserId;
+  CProfilePage({super.key, required this.uid, this.fromHome = false, this.currentUserId="d"});
 
   @override
   State<CProfilePage> createState() => _CProfilePageState();
@@ -49,6 +51,15 @@ class _CProfilePageState extends State<CProfilePage> {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
+            leading: widget.fromHome
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.read<CPostCubit>().fetchAllPosts(); // Refresh home on return
+                    },
+                  )
+                : null,
           ),
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: Center(
@@ -63,7 +74,7 @@ class _CProfilePageState extends State<CProfilePage> {
       // loading
       else if (state is CProfileLoadingState) {
         return const CLoadingScreen(
-          loadingText: "Loading Your Profile...",
+          loadingText: "Loading The Profile...",
         );
       } else {
         return const Center(child: Text("Profile Not Found"));
@@ -76,7 +87,7 @@ class _CProfilePageState extends State<CProfilePage> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          CProfileCardWidget(user: usr),
+          CProfileCardWidget(user: usr,uid:widget.uid, currentUserId: widget.currentUserId,),
           SizedBox(
             width: 1400,
             height: 500,
@@ -90,7 +101,7 @@ class _CProfilePageState extends State<CProfilePage> {
                     child: GridView.count(
                       crossAxisCount: 3,
                       children: state.posts
-                          .map((post) => CPostUiDesktop(post: post))
+                          .map((post) => CPostUiDesktop(post: post, profileImageUrl: usr.profileImageUrl,))
                           .toList(),
                     ),
                   );
@@ -105,28 +116,30 @@ class _CProfilePageState extends State<CProfilePage> {
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, ResponsiveHelper res, CProfileUser usr) {
-  return Column(
-    children: [
-      _buildProfileHeader(usr, res), // Displays user profile info
-      Expanded(
-        child: BlocBuilder<CPostCubit, CPostState>(
-          builder: (context, state) {
-            if (state is CPostsLoadingState) {
-              return const CircularProgressIndicator();
-            } else if (state is CPostsLoadedState) {
-              return ListView(
-                children: state.posts.map((post) => CPostUi(post: post)).toList(),
-              );
-            } else {
-              return const Center(child: Text("No posts found"));
-            }
-          },
+  Widget _buildMobileLayout(
+      BuildContext context, ResponsiveHelper res, CProfileUser usr) {
+    return Column(
+      children: [
+        _buildProfileHeader(usr, res), // Displays user profile info
+        Expanded(
+          child: BlocBuilder<CPostCubit, CPostState>(
+            builder: (context, state) {
+              if (state is CPostsLoadingState) {
+                return const CircularProgressIndicator();
+              } else if (state is CPostsLoadedState) {
+                return ListView(
+                  children:
+                      state.posts.map((post) => CPostUi(post: post, profileImageUrl: usr.profileImageUrl,)).toList(),
+                );
+              } else {
+                return const Center(child: Text("No posts found"));
+              }
+            },
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Widget _buildStatItem(String count, String label) {
     return Column(
@@ -139,52 +152,54 @@ class _CProfilePageState extends State<CProfilePage> {
   }
 
   Widget _buildProfileHeader(CProfileUser usr, ResponsiveHelper res) {
-  return Column(
-    children: [
-      Stack(
-        alignment: Alignment.center,
-        children: [
-          CachedNetworkImage(
-            imageUrl: usr.profileImageUrl,
-            imageBuilder: (context, imageProvider) => CircleAvatar(
-              radius: 50,
-              backgroundImage: imageProvider,
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            CachedNetworkImage(
+              imageUrl: usr.profileImageUrl,
+              imageBuilder: (context, imageProvider) => CircleAvatar(
+                radius: 50,
+                backgroundImage: imageProvider,
+              ),
+              placeholder: (context, url) => const CircleAvatar(
+                radius: 50,
+                child: CircularProgressIndicator(),
+              ),
+              errorWidget: (context, url, error) => const CircleAvatar(
+                radius: 50,
+                child: Icon(Icons.person, size: 50, color: Colors.grey),
+              ),
             ),
-            placeholder: (context, url) => const CircleAvatar(
-              radius: 50,
-              child: CircularProgressIndicator(),
-            ),
-            errorWidget: (context, url, error) => const CircleAvatar(
-              radius: 50,
-              child: Icon(Icons.person, size: 50, color: Colors.grey),
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-      Text(
-        usr.name,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      ),
-      SizedBox(
-        width: res.width(50),
-        child: Text(
-          usr.bio,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 14),
+          ],
         ),
-      ),
-      const SizedBox(height: 20),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildStatItem("65", "Photos"), // Temporary values (Replace dynamically)
-          _buildStatItem("43", "Followers"),
-          _buildStatItem("21", "Following"),
-        ],
-      ),
-      const SizedBox(height: 20),
-       CActionButton(
+        const SizedBox(height: 10),
+        Text(
+          usr.name,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(
+          width: res.width(50),
+          child: Text(
+            usr.bio,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildStatItem(
+                "65", "Photos"), // Temporary values (Replace dynamically)
+            _buildStatItem("43", "Followers"),
+            _buildStatItem("21", "Following"),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (widget.uid == widget.currentUserId)
+        CActionButton(
           onPressed: () {
             Navigator.push(
               context,
@@ -195,9 +210,8 @@ class _CProfilePageState extends State<CProfilePage> {
           },
           label: " Edit Profile   ",
           icon: Icons.edit,
-        
-      ),
-    ],
-  );
-}
+        ),
+      ],
+    );
+  }
 }

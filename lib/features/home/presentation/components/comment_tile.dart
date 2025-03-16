@@ -20,7 +20,7 @@ class CCommentTile extends StatelessWidget {
     return Row(
       children: [
         // Name
-        Text(comment.userName, style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(comment.userName, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(width: 10),
 
         // Comment Text
@@ -29,7 +29,7 @@ class CCommentTile extends StatelessWidget {
         // Delete Button (only visible if the current user is the author)
         if (comment.userId == currentUserId)
           IconButton(
-            icon: Icon(Icons.delete, color: Colors.red),
+            icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: () {
               context.read<CPostCubit>().deleteComment(postId, comment.id);
             },

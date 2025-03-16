@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 
 class CProfileCardWidget extends StatefulWidget {
   final CProfileUser user;
-  const CProfileCardWidget({super.key, required this.user});
+  String uid;
+  String currentUserId;
+  CProfileCardWidget({super.key, required this.user, String this.uid="", String this.currentUserId =""});
 
   @override
   State<CProfileCardWidget> createState() => _CProfileCardWidgetState();
@@ -64,6 +66,7 @@ class _CProfileCardWidgetState extends State<CProfileCardWidget> {
                   SizedBox(width: res.width(7)),
                   
                   SizedBox(width: res.width(3)),
+                  if (widget.uid == widget.currentUserId)
                   Expanded(
                     child: CActionButton(
                       icon: Icons.edit,

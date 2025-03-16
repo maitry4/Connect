@@ -12,22 +12,29 @@ class CFirebaseProfileRepo implements CProfileRepo {
     try {
       final userDoc = await firebaseFirestore.collection('users').doc(uid).get();
       if (userDoc.exists) {
-        final userData = userDoc.data();
-        if (userData != null) {
-          return CProfileUser(
-            uid: uid,
-            email: userData['email'],
-            name: userData['name'],
-            bio: userData['bio'] ?? '',
-            profileImageUrl: userData['profileImageUrl'].toString(),
-            profileImageId: userData['profileImageId'],
-          );
-        }
+        return CProfileUser.fromJson(userDoc.data()!);
       }
     } catch (e) {
       print("Error fetching user profile: $e");
     }
     return null;
+  }
+  // Fetch multiple user profiles at once
+  @override
+  Future<List<CProfileUser>> fetchMultipleUserProfiles(List<String> userIds) async {
+    if (userIds.isEmpty) return [];
+
+    try {
+      final querySnapshot = await firebaseFirestore
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: userIds)
+          .get();
+
+      return querySnapshot.docs.map((doc) => CProfileUser.fromJson(doc.data())).toList();
+    } catch (e) {
+      print("Error fetching multiple profiles: $e");
+      return [];
+    }
   }
 
   @override
